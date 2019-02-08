@@ -25,7 +25,7 @@ cd ..
 
 # Write VPD variables. These will be available read-only via /sys/firmware/vpd/*
 # RW_VPD partition
-pd -f build/coreboot.rom -i RW_VPD -O
+vpd -f build/coreboot.rom -i RW_VPD -O
 vpd -f build/coreboot.rom -i RW_VPD -s 'LinuxBoot=IsCool'
 # RO_VPD partition
 vpd -f build/coreboot.rom -i RO_VPD -O
