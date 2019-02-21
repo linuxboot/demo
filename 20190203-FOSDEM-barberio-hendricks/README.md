@@ -16,8 +16,8 @@ The first VM will act as a server, and will run:
 
 The second VM will act as a client, and will run our coreboot + LinuxBoot firmware. Use the following steps:
 * fetch the necessary code (u-root, Linux, coreboot) (see the [00-fetch.sh](scripts/00-fetch.sh) script)
-* build u-root, Linux and coreboot for Qemu (see the [01-build.sh](scripts/00-build.sh) script)
-* run it! (see the [02-run.sh](scripts/00-run.sh) script)
+* build u-root, Linux and coreboot for Qemu (see the [01-build.sh](scripts/01-build.sh) script)
+* run it! (see the [02-run.sh](scripts/02-run.sh) script)
 
 
 ## Links
