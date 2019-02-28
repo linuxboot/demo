@@ -1,0 +1,3 @@
+build/
+blobs/*.rom
+deploy/*.retry

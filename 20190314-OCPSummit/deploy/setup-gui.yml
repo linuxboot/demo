@@ -1,0 +1,42 @@
+---
+
+- name: packages setup
+  hosts: gui
+  tasks:
+    - debconf:
+        name: wireshark-common
+        question: wireshark-common/install-setuid
+        value: true
+        vtype: boolean
+    - apt:
+        pkg:
+          - screen
+          - putty
+          - vim-gtk
+          - wireshark
+        update_cache: yes
+        cache_valid_time: 3600
+    - name: adding existing user '{{ ansible_user }}' to group wireshark
+      user:
+        name: '{{ ansible_user }}'
+        groups: wireshark
+        append: yes
+
+- name: user setup
+  hosts: gui
+  become: false
+  tasks:
+    - name: Copy desktop items
+      copy:
+        src: 'files/{{ item }}'
+        dest: '{{ ansible_user_dir }}/Desktop/'
+      with_items:
+        - Linuxboot-Demo.txt
+        - putty.desktop
+        - wireshark.desktop
+    - name: Copy putty config
+      copy:
+        src: files/linuxboot
+        dest: '{{ ansible_user_dir }}/.putty/sessions/'
+
+

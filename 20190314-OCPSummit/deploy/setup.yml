@@ -1,0 +1,55 @@
+---
+
+- name: packages setup
+  hosts: worker
+  tasks:
+  - apt:
+      pkg:
+        - dnsmasq
+        - apt-cacher-ng
+      update_cache: yes
+      cache_valid_time: 3600
+
+- name: interfaces
+  hosts: worker
+  roles:
+  - role: network_interface
+    vars:
+      - network_ether_interfaces:
+        - device: '{{ my_net_device }}'
+          bootproto: static
+          address: 192.168.142.2
+          netmask: 255.255.255.0
+          network: 192.168.142.0
+          broadcast: 192.168.142.255
+
+- name: configure dnsmasq and tftp
+  hosts: worker
+  vars:
+    - tftp_root: /var/tftp/
+  tasks:
+    - name: Creates directory
+      file:
+        path: '{{ tftp_root }}'
+        state: directory
+    - name: Extract netboot.tar.gz (debian) into /var/tftp/
+      unarchive:
+        src: ../build/netboot.tar.gz
+        dest: '{{ tftp_root }}'
+        owner: dnsmasq
+        creates: '{{ tftp_root }}version.info'
+    - template:
+        src: templates/dnsmasq.conf.j2
+        dest: /etc/dnsmasq.d/net-server.conf
+      vars:
+        - device: '{{ my_net_device }}'
+        - dhcp_range: "192.168.142.100,192.168.142.199,1h"
+        - dhcp_boot: "pxelinux.0"
+      notify:
+      - restart dnsmasq
+  handlers:
+    - name: restart dnsmasq
+      service:
+        name: dnsmasq
+        state: restarted
+        enabled: yes

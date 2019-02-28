@@ -1,0 +1,12 @@
+# Configuration file for dnsmasq.
+{% if mirror_ip is defined %}
+# redirect addresses to us
+address=/mirror/{{ mirror_ip }}
+address=/security.debian.org/{{ mirror_ip }}
+{% endif %}
+interface={{ device }}
+dhcp-range={{ dhcp_range }}
+dhcp-boot={{ dhcp_boot }}
+enable-tftp
+tftp-root={{ tftp_root }}
+
