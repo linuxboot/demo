@@ -1,0 +1,7 @@
+DEVICE={{ item.1 }}
+TYPE=Ethernet
+BOOTPROTO=none
+BRIDGE={{ item.0.device }}
+{% if item.mtu is defined %}
+MTU={{ item.mtu }}
+{% endif %}

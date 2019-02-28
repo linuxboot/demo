@@ -1,0 +1,3 @@
+
+- src: git+https://github.com/MartinVerges/ansible.network_interface.git
+  name: network_interface

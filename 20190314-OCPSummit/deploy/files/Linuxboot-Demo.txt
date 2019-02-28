@@ -1,0 +1,56 @@
+# Linuxboot DEMO
+
+## pi side:
+
+sudo journalctl -f -u dnsmasq.service
+
+Launch putty, use linuxboot config
+
+or screen /dev/ttyUSB0 57600
+
+## linuxboot Debian installer
+
+pxeboot -v
+
+Some specific parameters:
+ either select a mirror and set a proxy to:
+     proxy:     http://192.168.142.2:3142/
+ or select 'enter information manually' (at top):
+     hostname:  mirror
+     directory: /debian/
+
+Do not load missing firmware from removable media.
+
+/!\ Do not force UEFI install
+
+select package: ssh server + std only
+Choose software to install:
+    [ ] Debian desktop environment
+    [ ] ... GNOME
+    [ ] ... Xfce
+    [ ] ... KDE
+    [ ] ... Cinnamon
+    [ ] ... MATE
+    [ ] ... LXDE
+    [ ] web server
+    [ ] print server
+    [*] SSH server
+    [*] standard system utilities
+
+
+
+After reboot use cltr-right_clic on putty
+ then 'Reset Terminal' in the menu
+
+## linuxboot once installed
+
+boot -append 'module_blacklist=mei_me'
+
+## Over IPMI
+
+ipmitool -I lanplus -U USERID -P PASSW0RD -H 192.168.142.131 chassis power on
+ipmitool -I lanplus -U USERID -P PASSW0RD -H 192.168.142.131 sol activate
+
+pxeboot -v -append 'console=ttyS1,57600' -reuse='' -remove console
+
+boot -append 'module_blacklist=mei_me console=ttyS1,57600' -reuse earlyprintk -remove console

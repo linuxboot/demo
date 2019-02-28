@@ -1,0 +1,5 @@
+[Desktop Entry]
+Type=Link
+Name=PuTTY SSH Client
+Icon=putty
+URL=/usr/share/applications/putty.desktop

@@ -1,0 +1,159 @@
+---
+- name: Add the OS specific varibles
+  include_vars: "{{ ansible_os_family }}.yml"
+
+- name: Include specific tasks for the RedHat family
+  include: redhat.yml
+  when: ansible_os_family == 'RedHat'
+
+- name: Include specific tasks for the Debian family
+  include: debian.yml
+  when: ansible_os_family == "Debian"
+
+- name: Create the network configuration file for ethernet interfaces
+  template:
+    src: "ethernet_{{ ansible_os_family }}.j2"
+    dest: "{{ net_path }}/ifcfg-{{ item.device }}"
+  with_items: "{{ network_ether_interfaces }}"
+  when: network_ether_interfaces is defined
+  register: ether_result
+
+- name: Create the network configuration file for slave in the bond devices
+  template:
+    src: "bond_slave_{{ ansible_os_family }}.j2"
+    dest: "{{ net_path }}/ifcfg-{{ item.1 }}"
+  with_subelements:
+    - "{{ network_bond_interfaces }}"
+    - bond_slaves
+  when: network_bond_interfaces is defined
+  register: bond_port_result
+
+- name: Create the network configuration file for bond devices
+  template:
+    src: "bond_{{ ansible_os_family }}.j2"
+    dest: "{{ net_path }}/ifcfg-{{ item.device }}"
+  with_items: "{{ network_bond_interfaces }}"
+  when: network_bond_interfaces
+  register: bond_result
+
+- name: Make sure the bonding module is loaded
+  modprobe:
+    name: bonding
+    state: present
+  when: bond_result is changed
+
+- name: Make the bonding module persistent
+  become: true
+  lineinfile:
+    line: 'bonding'
+    dest: /etc/modules
+    insertafter: EOF
+  when:
+    - network_bond_interfaces
+    - network_modprobe_persist
+
+- name: Create the network configuration file for vlan devices
+  template:
+    src: "ethernet_{{ ansible_os_family }}.j2"
+    dest: "{{ net_path }}/ifcfg-{{ item.device }}"
+  with_items: "{{ network_vlan_interfaces }}"
+  when: network_vlan_interfaces
+  register: vlan_result
+
+- name: Make sure the 8021q module is loaded
+  modprobe:
+    name: 8021q
+    state: present
+  when: vlan_result is changed
+
+- name: Make the 8021q module persistent
+  become: true
+  lineinfile:
+    line: '8021q'
+    dest: /etc/modules
+    insertafter: EOF
+  when:
+    - network_vlan_interfaces
+    - network_modprobe_persist
+
+- name: Create the network configuration file for bridge devices
+  template:
+    src: "bridge_{{ ansible_os_family }}.j2"
+    dest: "{{ net_path }}/ifcfg-{{ item.device }}"
+  with_items: "{{ network_bridge_interfaces }}"
+  when: network_bridge_interfaces is defined
+  register: bridge_result
+
+- name: Create the network configuration file for port on the bridge devices
+  template:
+    src: "bridge_port_{{ ansible_os_family }}.j2"
+    dest: "{{ net_path }}/ifcfg-{{ item.1 }}"
+  with_subelements:
+    - '{{ network_bridge_interfaces }}'
+    - bridge_ports
+  when: network_bridge_interfaces is defined
+  register: bridge_port_result
+
+# Restart Network Interfaces (deconfigurate & reconfigurate interfaces)
+- include: restartscript.yml
+  when: network_allow_service_restart and ansible_os_family == 'Debian'
+
+- name: Enable the "network" service
+  service:
+    name: network
+    enabled: true
+  check_mode: yes
+  register: network_service
+  ignore_errors: true
+  when: network_allow_service_restart and ansible_os_family == 'RedHat'
+
+- name: Verify if the "network" service is enabled
+  set_fact:
+    network_service_enabled: "{{ not network_service.failed
+        and not network_service.changed }}"
+  when: network_allow_service_restart and ansible_os_family == 'RedHat'
+
+- name: Enable the "NetworkManager" service
+  service:
+    name: NetworkManager
+    enabled: true
+  check_mode: yes
+  register: NetworkManager_service
+  ignore_errors: true
+  when: network_allow_service_restart and ansible_os_family == 'RedHat'
+
+- name: Verify if the "NetworkManager" service is enabled
+  set_fact:
+    NetworkManager_service_enabled: "{{ not NetworkManager_service.failed
+        and not NetworkManager_service.changed }}"
+  when: network_allow_service_restart and ansible_os_family == 'RedHat'
+
+- name: Restart the "network" service on Red Hat systems
+  service:
+    name: network
+    state: restarted
+  when: >
+    (network_allow_service_restart
+     and ansible_os_family == 'RedHat'
+     and network_service_enabled)
+     and (ether_result is changed
+          or bond_port_result is changed
+          or bond_result is changed
+          or vlan_result is changed
+          or bridge_result is changed
+          or bridge_port_result is changed)
+
+- name: Restart the "NetworkManager" service on Red Hat systems
+  service:
+    name: network
+    state: restarted
+  when: >
+    (network_allow_service_restart
+    and ansible_os_family == 'RedHat'
+    and NetworkManager_service_enabled) and
+    (ether_result is changed or
+     bond_port_result is changed or
+     bond_result is changed or
+     vlan_result is changed or
+     bridge_result is changed or
+     bridge_port_result is changed)
