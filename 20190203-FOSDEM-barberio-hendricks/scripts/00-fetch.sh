@@ -18,8 +18,8 @@ get_kernel() {
     if [ ! -e "linux-${KERNEL_VER}" ]
     then
         wget https://cdn.kernel.org/pub/linux/kernel/v4.x/linux-${KERNEL_VER}.tar.xz
+        tar xvJf linux-${KERNEL_VER}.tar.xz
     fi
-    tar xvJf linux-${KERNEL_VER}.tar.xz
     cp ../config/linux-config linux-${KERNEL_VER}/.config
 }
 
