@@ -20,16 +20,17 @@ make -j$(nproc)
 
 # build coreboot for qemu with the provided config file.
 cd ../coreboot/
+BUILD_LANGUAGES=c CPUS=$(nproc) make crossgcc-i386
 make
 cd ..
 
 # Write VPD variables. These will be available read-only via /sys/firmware/vpd/*
 # RW_VPD partition
-vpd -f build/coreboot.rom -i RW_VPD -O
-vpd -f build/coreboot.rom -i RW_VPD -s 'LinuxBoot=IsCool'
+vpd -f coreboot/build/coreboot.rom -i RW_VPD -O
+vpd -f coreboot/build/coreboot.rom -i RW_VPD -s 'LinuxBoot=IsCool'
 # RO_VPD partition
-vpd -f build/coreboot.rom -i RO_VPD -O
-vpd -f build/coreboot.rom -i RO_VPD -s 'Boot0000={"type":"netboot","method":"dhcpv6"}'
-vpd -f build/coreboot.rom -i RO_VPD -g Boot0000
+vpd -f coreboot/build/coreboot.rom -i RO_VPD -O
+vpd -f coreboot/build/coreboot.rom -i RO_VPD -s 'Boot0000={"type":"netboot","method":"dhcpv6"}'
+vpd -f coreboot/build/coreboot.rom -i RO_VPD -g Boot0000
 
 echo 'Image built under coreboot/build/coreboot.rom'
