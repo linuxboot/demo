@@ -4,12 +4,21 @@ get_coreboot() {
     if [ ! -e coreboot ]
     then
         git clone https://review.coreboot.org/coreboot.git
+        # cherry-pick VPD-on-Qemu patch, https://review.coreboot.org/c/coreboot/+/32087
+        (cd coreboot && \
+            git fetch https://review.coreboot.org/coreboot refs/changes/87/32087/6 && \
+            git cherry-pick FETCH_HEAD
+        )
+        # Stick on the cherry-picked branch to apply a patch that enables VPD on QEMU
+        # TODO: remove the above cherry-pick and uncomment the block below once the
+        # patch above is merged.
+        # (
+        #    cd coreboot
+        #    git checkout tags/4.9
+        # )
     fi
     cp ../config/coreboot-config coreboot/.config
-    (
-        cd coreboot
-        git checkout tags/4.9
-    )
+
 }
 
 KERNEL_VER=4.19.6
