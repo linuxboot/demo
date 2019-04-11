@@ -16,5 +16,5 @@ fi
 
 ip6tables -P INPUT ACCEPT
 iptables -P INPUT ACCEPT
-sudo kea-dhcp6 -c kea6.conf -d
+sudo kea-dhcp6 -c ../config/kea6.conf -d
 
